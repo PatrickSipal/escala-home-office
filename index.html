@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<style>body{margin:0}</style>
+<title>Escala Home Office</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+*{box-sizing:border-box}
+/* Layout: cabeçalho e legenda, depois uma grade por semana (linhas = pessoas, colunas = dias), cada célula pintada inteira com Casa ou Escritório */
+:root{
+  --bg:#f3f5f4; --surface:#ffffff; --fg:#17201d; --muted:#5d6b66; --line:#dde3e0;
+  --home:#1d8a62; --office:#3b55a8; --on:#ffffff;
+  --hol:#9a5b13; --hol-bg:#fbefdc; --vac:#8a6a9e; --vac-bg:#efe7f4; --out:#eef1f0;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Figtree", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111816; --surface:#19221f; --fg:#e7eeeb; --muted:#97a6a0; --line:#2b3632;
+  --home:#2a9c71; --office:#4d67c2; --on:#ffffff;
+  --hol:#f0b866; --hol-bg:#3a2a14; --vac:#cbb0dc; --vac-bg:#2f2538; --out:#161e1b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111816; --surface:#19221f; --fg:#e7eeeb; --muted:#97a6a0; --line:#2b3632;
+  --home:#2a9c71; --office:#4d67c2; --on:#ffffff;
+  --hol:#f0b866; --hol-bg:#3a2a14; --vac:#cbb0dc; --vac-bg:#2f2538; --out:#161e1b; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
+.wrap{max-width:1000px;margin:0 auto;padding-block:32px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:24px}
+header{display:flex;flex-direction:column;gap:10px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(28px,5vw,44px);line-height:1.05;margin:0;text-wrap:balance}
+.lede{color:var(--muted);max-width:62ch;margin:0}
+
+.legend{display:flex;gap:10px;flex-wrap:wrap;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px}
+.lg{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;padding:6px 12px 6px 8px;border-radius:8px}
+.lg svg{width:18px;height:18px}
+.lg.h{background:var(--home);color:var(--on)} .lg.e{background:var(--office);color:var(--on)}
+.lg.f{background:var(--hol-bg);color:var(--hol)} .lg.v{background:var(--vac-bg);color:var(--vac)}
+
+.month{font-family:var(--display);font-weight:800;font-size:26px;margin:8px 0 0;display:flex;align-items:center;gap:10px;padding-top:16px;border-top:1px solid var(--line)}
+.month .tag{font-family:var(--body);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;padding:3px 10px;border-radius:999px;background:var(--hol-bg);color:var(--hol)}
+
+.week{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.week-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.week-h h3{font-family:var(--display);font-size:18px;margin:0;font-weight:600}
+.week-h .note{font-size:13px;color:var(--hol);font-weight:500}
+.scroll{overflow-x:auto}
+table.grid{width:100%;border-collapse:separate;border-spacing:4px;table-layout:fixed;min-width:520px}
+.grid th{font-weight:600;padding:4px 2px}
+.grid thead th{text-align:center}
+.grid thead th b{display:block;font-family:var(--display);font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.grid thead th small{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.grid th.name{width:92px;text-align:left;font-size:14px}
+.grid td{height:44px;border-radius:8px;text-align:center;font-size:13px;font-weight:700;padding:0 4px}
+.grid td .c{display:flex;align-items:center;justify-content:center;gap:6px}
+.grid td svg{width:17px;height:17px;flex:none}
+td.H{background:var(--home);color:var(--on)}
+td.E{background:var(--office);color:var(--on)}
+td.F{background:var(--hol-bg);color:var(--hol)}
+td.V{background:var(--vac-bg);color:var(--vac)}
+td.O{background:var(--out)}
+td.swap{box-shadow:inset 0 0 0 2px var(--on);}
+.grid tfoot th, .grid tfoot td{height:auto;font-size:12px;font-weight:600;color:var(--muted);background:none;padding-top:2px}
+@media (max-width:600px){ .grid td .t{display:none} table.grid{min-width:340px;border-spacing:3px} .grid th.name{width:74px;font-size:13px} .week{padding:10px} }
+.tally{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+</style>
+
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" d="M3 11.5 12 4l9 7.5M5.5 9.5V20h13V9.5M10 20v-5h4v5"/></symbol>
+  <symbol id="i-office" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" d="M4 21V4h11v17M15 9h5v12M2 21h20M7.5 8h4M7.5 12h4M7.5 16h4"/></symbol>
+</svg>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Liberação de home office · 29 out – 31 dez 2026</div>
+    <h1>Escala Home Office: Igor, Matheus, Guilherme e Rafael</h1>
+    <p class="lede">Verde é dia em casa, azul é dia no escritório. Em semanas de feriado, quem perderia o dia em casa troca pela quarta (célula com contorno branco).</p>
+  </header>
+
+  <div class="legend">
+    <span class="lg h"><svg><use href="#i-home"/></svg>Casa</span>
+    <span class="lg e"><svg><use href="#i-office"/></svg>Escritório</span>
+    <span class="lg f">Feriado</span>
+    <span class="lg v">Férias</span>
+  </div>
+
+  <div id="weeks" style="display:flex;flex-direction:column;gap:16px"></div>
+</div>
+
+<script>
+const P = ["Igor","Matheus","Guilherme","Rafael"];
+const RAF_BACK = "2026-11-04", CAP_END = "2026-11-11", RAF_HOME = [2,4];
+// Semana padrão: dia da semana (1=seg..5=sex) -> quem fica em casa (Igor, Matheus, Guilherme)
+const BASE = {1:["Igor","Matheus"],2:["Guilherme"],3:["Igor"],4:["Matheus"],5:["Igor","Guilherme"]};
+const HOLIDAYS = {"2026-11-02":"Finados","2026-11-20":"Consciência Negra","2026-12-25":"Natal"};
+const SWAPS = {
+  "2026-11-04":{add:"Matheus", why:"Matheus troca a segunda (feriado) pela quarta"},
+  "2026-11-18":{add:"Guilherme", why:"Guilherme troca a sexta (feriado) pela quarta"},
+  "2026-12-23":{add:"Guilherme", why:"Guilherme troca a sexta (Natal) pela quarta"}
+};
+const START = new Date(2026,9,29), END = new Date(2026,11,31);
+const DN = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+const key = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const ICON = {H:'<svg><use href="#i-home"/></svg>', E:'<svg><use href="#i-office"/></svg>'};
+const TXT = {H:"Casa", E:"Escritório"};
+
+function dayInfo(d){
+  const k = key(d), wd = d.getDay();
+  if (d < START || d > END) return {type:"out"};
+  if (HOLIDAYS[k]) return {type:"hol", name:HOLIDAYS[k]};
+  const home = [...BASE[wd]], swap = SWAPS[k], st = {};
+  if (swap) home.push(swap.add);
+  let vac = false;
+  if (k < RAF_BACK) vac = true;
+  else {
+    const others = 3 - home.length;
+    if (k <= CAP_END ? others >= 2 : RAF_HOME.includes(wd)) home.push("Rafael");
+  }
+  P.forEach(p => st[p] = (p==="Rafael" && vac) ? "V" : home.includes(p) ? "H" : "E");
+  const office = P.filter(p=>st[p]==="E").length;
+  return {type:"work", st, swap, office, cap: k <= CAP_END ? 2 : 3, back: k===RAF_BACK};
+}
+
+let monday = new Date(2026,9,26), html = "";
+while (monday <= END){
+  const days = [...Array(5)].map((_,i)=>{const d=new Date(monday); d.setDate(monday.getDate()+i); return d;});
+  const info = days.map(dayInfo), notes = [], count = {Igor:0,Matheus:0,Guilherme:0,Rafael:0};
+  info.forEach((x,i)=>{
+    if (x.type==="hol") notes.push(`${days[i].getDate()}/${days[i].getMonth()+1} feriado (${x.name})`);
+    if (x.swap) notes.push(x.swap.why);
+    if (x.back) notes.push("Rafael volta das férias");
+    if (x.type==="work") P.forEach(p=>{ if (x.st[p]==="H") count[p]++; });
+  });
+  const fri = days[4];
+  if (html === "") html += `<h2 class="month">Outubro e novembro</h2>`;
+  if (fri.getMonth()===11 && !html.includes('id="dez"')) html += `<h2 class="month" id="dez">Dezembro <span class="tag">Prévia</span></h2>`;
+
+  const head = `<tr><th class="name"></th>${days.map(d=>`<th><b>${d.getDate()}</b><small>${DN[d.getDay()]}</small></th>`).join("")}</tr>`;
+  const rows = P.map(p=>`<tr><th class="name">${p}</th>${info.map(x=>{
+    if (x.type==="out") return `<td class="O"></td>`;
+    if (x.type==="hol") return `<td class="F"><span class="c">Feriado</span></td>`;
+    const s = x.st[p];
+    if (s==="V") return `<td class="V"><span class="c">Férias</span></td>`;
+    const sw = x.swap && x.swap.add===p ? " swap" : "";
+    return `<td class="${s}${sw}" title="${p}: ${TXT[s]}"><span class="c">${ICON[s]}<span class="t">${TXT[s]}</span></span></td>`;
+  }).join("")}</tr>`).join("");
+  const foot = `<tr><th class="name">No escritório</th>${info.map(x=>`<td>${x.type==="work"?`${x.office} de ${x.cap}`:""}</td>`).join("")}</tr>`;
+  const rafVac = info.some(x=>x.type==="work" && x.st.Rafael==="V");
+
+  html += `<section class="week">
+    <div class="week-h"><h3>${monday.getDate()}/${monday.getMonth()+1} a ${fri.getDate()}/${fri.getMonth()+1}</h3>${notes.length?`<span class="note">${notes.join(" · ")}</span>`:""}</div>
+    <div class="scroll"><table class="grid"><thead>${head}</thead><tbody>${rows}</tbody><tfoot>${foot}</tfoot></table></div>
+    <div class="tally">Dias em casa: ${P.map(p=>p==="Rafael"&&rafVac&&count[p]===0?"Rafael em férias":`${p} ${count[p]}`).join(" · ")}</div>
+  </section>`;
+  monday.setDate(monday.getDate()+7);
+}
+document.getElementById("weeks").innerHTML = html;
+</script>
+
+</body>
+</html>
