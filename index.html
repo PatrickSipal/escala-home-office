@@ -63,7 +63,17 @@ td.O{background:var(--out)}
 td.swap{box-shadow:inset 0 0 0 2px var(--on);}
 .grid tfoot th, .grid tfoot td{height:auto;font-size:12px;font-weight:600;color:var(--muted);background:none;padding-top:2px}
 @media (max-width:600px){ .grid td .t{display:none} table.grid{min-width:340px;border-spacing:3px} .grid th.name{width:74px;font-size:13px} .week{padding:10px} }
-.tally{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+[hidden]{display:none!important}
+.stack{display:flex;flex-direction:column;gap:16px}
+#past{opacity:.75}
+.past-btn{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:14px;font-weight:600;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 14px 7px 10px;cursor:pointer}
+.past-btn svg{width:18px;height:18px}
+.past-btn:hover{color:var(--fg)}
+.past-btn:focus-visible{outline:2px solid var(--office);outline-offset:2px}
+.week.current{border:2px solid var(--office);box-shadow:0 6px 20px -12px var(--office)}
+.now{display:inline-block;margin-left:10px;vertical-align:middle;font-family:var(--body);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 10px;border-radius:999px;background:var(--office);color:var(--on)}
+.grid thead th.today{background:var(--office);color:var(--on);border-radius:8px}
+.grid thead th.today small{color:var(--on)}
 </style>
 
 </head>
@@ -87,7 +97,12 @@ td.swap{box-shadow:inset 0 0 0 2px var(--on);}
     <span class="lg v">Férias</span>
   </div>
 
-  <div id="weeks" style="display:flex;flex-direction:column;gap:16px"></div>
+  <button type="button" id="toggle-past" class="past-btn" aria-expanded="false" aria-controls="past" hidden>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2"/></svg>
+    <span class="lbl">Ver semanas anteriores</span>
+  </button>
+  <div id="past" class="stack" hidden></div>
+  <div id="weeks" class="stack"></div>
 </div>
 
 <script>
@@ -124,21 +139,36 @@ function dayInfo(d){
   return {type:"work", st, swap, office, cap: k <= CAP_END ? 2 : 3, back: k===RAF_BACK};
 }
 
-let monday = new Date(2026,9,26), html = "";
+const now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate()), todayKey = key(today);
+const MONTHS = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+const PREVIEW_MONTH = 11; // dezembro ainda é prévia
+let monday = new Date(2026,9,26), pastHtml = "", nextHtml = "", pastCount = 0, labeled = false;
+const lastMonth = {past:null, next:null};
 while (monday <= END){
   const days = [...Array(5)].map((_,i)=>{const d=new Date(monday); d.setDate(monday.getDate()+i); return d;});
-  const info = days.map(dayInfo), notes = [], count = {Igor:0,Matheus:0,Guilherme:0,Rafael:0};
+  const info = days.map(dayInfo), notes = [];
   info.forEach((x,i)=>{
     if (x.type==="hol") notes.push(`${days[i].getDate()}/${days[i].getMonth()+1} feriado (${x.name})`);
     if (x.swap) notes.push(x.swap.why);
     if (x.back) notes.push("Rafael volta das férias");
-    if (x.type==="work") P.forEach(p=>{ if (x.st[p]==="H") count[p]++; });
   });
   const fri = days[4];
-  if (html === "") html += `<h2 class="month">Outubro e novembro</h2>`;
-  if (fri.getMonth()===11 && !html.includes('id="dez"')) html += `<h2 class="month" id="dez">Dezembro <span class="tag">Prévia</span></h2>`;
+  const past = fri < today;
+  const isCurrent = !past && today >= monday;
+  // mês da semana = mês da maioria dos dias dentro do período
+  const inRange = days.filter(d=>d>=START && d<=END);
+  const m = inRange[Math.floor(inRange.length/2)].getMonth();
+  const bucket = past ? "past" : "next";
+  let heading = "";
+  if (lastMonth[bucket] !== m){
+    lastMonth[bucket] = m;
+    const name = MONTHS[m].charAt(0).toUpperCase()+MONTHS[m].slice(1);
+    heading = `<h2 class="month">${name}${m===PREVIEW_MONTH?' <span class="tag">Prévia</span>':""}</h2>`;
+  }
+  let badge = "";
+  if (!past && !labeled){ badge = `<span class="now">${isCurrent?"Semana atual":"Próxima semana"}</span>`; labeled = true; }
 
-  const head = `<tr><th class="name"></th>${days.map(d=>`<th><b>${d.getDate()}</b><small>${DN[d.getDay()]}</small></th>`).join("")}</tr>`;
+  const head = `<tr><th class="name"></th>${days.map(d=>`<th${key(d)===todayKey?' class="today"':""}><b>${d.getDate()}</b><small>${key(d)===todayKey?"Hoje":DN[d.getDay()]}</small></th>`).join("")}</tr>`;
   const rows = P.map(p=>`<tr><th class="name">${p}</th>${info.map(x=>{
     if (x.type==="out") return `<td class="O"></td>`;
     if (x.type==="hol") return `<td class="F"><span class="c">Feriado</span></td>`;
@@ -148,16 +178,29 @@ while (monday <= END){
     return `<td class="${s}${sw}" title="${p}: ${TXT[s]}"><span class="c">${ICON[s]}<span class="t">${TXT[s]}</span></span></td>`;
   }).join("")}</tr>`).join("");
   const foot = `<tr><th class="name">No escritório</th>${info.map(x=>`<td>${x.type==="work"?`${x.office} de ${x.cap}`:""}</td>`).join("")}</tr>`;
-  const rafVac = info.some(x=>x.type==="work" && x.st.Rafael==="V");
-
-  html += `<section class="week">
-    <div class="week-h"><h3>${monday.getDate()}/${monday.getMonth()+1} a ${fri.getDate()}/${fri.getMonth()+1}</h3>${notes.length?`<span class="note">${notes.join(" · ")}</span>`:""}</div>
+  const section = `${heading}<section class="week${badge?" current":""}">
+    <div class="week-h"><h3>${monday.getDate()}/${monday.getMonth()+1} a ${fri.getDate()}/${fri.getMonth()+1}${badge}</h3>${notes.length?`<span class="note">${notes.join(" · ")}</span>`:""}</div>
     <div class="scroll"><table class="grid"><thead>${head}</thead><tbody>${rows}</tbody><tfoot>${foot}</tfoot></table></div>
-    <div class="tally">Dias em casa: ${P.map(p=>p==="Rafael"&&rafVac&&count[p]===0?"Rafael em férias":`${p} ${count[p]}`).join(" · ")}</div>
   </section>`;
+  if (past){ pastHtml += section; pastCount++; } else nextHtml += section;
   monday.setDate(monday.getDate()+7);
 }
-document.getElementById("weeks").innerHTML = html;
+document.getElementById("weeks").innerHTML = nextHtml ||
+  `<section class="week"><div class="week-h"><h3>Escala encerrada</h3></div><p class="note" style="margin:0;color:var(--muted)">Todas as semanas desta escala já passaram. Consulte as semanas anteriores.</p></section>`;
+const pastBox = document.getElementById("past"), toggle = document.getElementById("toggle-past");
+if (pastCount){
+  pastBox.innerHTML = pastHtml;
+  toggle.hidden = false;
+  toggle.querySelector(".lbl").textContent = `Ver semanas anteriores (${pastCount})`;
+  toggle.addEventListener("click", ()=>{
+    const open = pastBox.hidden;
+    pastBox.hidden = !open;
+    toggle.setAttribute("aria-expanded", String(open));
+    toggle.querySelector(".lbl").textContent = open ? "Ocultar semanas anteriores" : `Ver semanas anteriores (${pastCount})`;
+  });
+}
+// atualiza sozinho na virada do dia se a página ficar aberta
+setTimeout(()=>location.reload(), new Date(today.getFullYear(), today.getMonth(), today.getDate()+1, 0, 5) - now);
 </script>
 
 </body>
