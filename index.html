@@ -156,7 +156,6 @@ while (monday <= END){
   info.forEach((x,i)=>{
     if (x.type==="hol") notes.push(`${days[i].getDate()}/${days[i].getMonth()+1} feriado (${x.name})`);
     if (x.swap) notes.push(x.swap.why);
-    if (x.ov && x.changed.length) notes.push(x.ov.why);
     if (x.back) notes.push("Rafael volta das férias");
   });
   const fri = days[4];
