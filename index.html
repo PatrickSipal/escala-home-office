@@ -116,6 +116,10 @@ const SWAPS = {
   "2026-11-18":{add:"Guilherme", why:"Guilherme troca a sexta (feriado) pela quarta"},
   "2026-12-23":{add:"Guilherme", why:"Guilherme troca a sexta (Natal) pela quarta"}
 };
+// Ajustes manuais pontuais: data -> {pessoa: "H" (casa) ou "E" (escritório)}
+const OVERRIDES = {
+  "2026-11-11":{set:{Matheus:"H", Rafael:"E"}, why:"Ajuste: Matheus em casa e Rafael no escritório na quarta"}
+};
 const START = new Date(2026,9,29), END = new Date(2026,11,31);
 const DN = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 const key = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
@@ -135,8 +139,10 @@ function dayInfo(d){
     if (k <= CAP_END ? others >= 2 : RAF_HOME.includes(wd)) home.push("Rafael");
   }
   P.forEach(p => st[p] = (p==="Rafael" && vac) ? "V" : home.includes(p) ? "H" : "E");
+  const ov = OVERRIDES[k], changed = [];
+  if (ov) Object.entries(ov.set).forEach(([p,v])=>{ if (st[p]!==v){ st[p]=v; changed.push(p); } });
   const office = P.filter(p=>st[p]==="E").length;
-  return {type:"work", st, swap, office, cap: k <= CAP_END ? 2 : 3, back: k===RAF_BACK};
+  return {type:"work", st, swap, ov, changed, office, cap: k <= CAP_END ? 2 : 3, back: k===RAF_BACK};
 }
 
 const now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate()), todayKey = key(today);
@@ -150,6 +156,7 @@ while (monday <= END){
   info.forEach((x,i)=>{
     if (x.type==="hol") notes.push(`${days[i].getDate()}/${days[i].getMonth()+1} feriado (${x.name})`);
     if (x.swap) notes.push(x.swap.why);
+    if (x.ov && x.changed.length) notes.push(x.ov.why);
     if (x.back) notes.push("Rafael volta das férias");
   });
   const fri = days[4];
@@ -174,7 +181,7 @@ while (monday <= END){
     if (x.type==="hol") return `<td class="F"><span class="c">Feriado</span></td>`;
     const s = x.st[p];
     if (s==="V") return `<td class="V"><span class="c">Férias</span></td>`;
-    const sw = x.swap && x.swap.add===p ? " swap" : "";
+    const sw = (x.swap && x.swap.add===p) || x.changed.includes(p) ? " swap" : "";
     return `<td class="${s}${sw}" title="${p}: ${TXT[s]}"><span class="c">${ICON[s]}<span class="t">${TXT[s]}</span></span></td>`;
   }).join("")}</tr>`).join("");
   const foot = `<tr><th class="name">No escritório</th>${info.map(x=>`<td>${x.type==="work"?`${x.office} de ${x.cap}`:""}</td>`).join("")}</tr>`;
